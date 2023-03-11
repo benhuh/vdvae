@@ -67,9 +67,13 @@ def get_width_settings(width, s):
 class Encoder(HModule):
     def build(self):
         H = self.H
+        print('H.image_channels, H.width',  H.image_channels, H.width)
+
+
         self.in_conv = get_3x3(H.image_channels, H.width)
         self.widths = get_width_settings(H.width, H.custom_width_str)
         enc_blocks = []
+        H.enc_blocks = "32x11,32d2,16x6,16d2,8x6,8d2,4x3,4d4,1x3"
         blockstr = parse_layer_string(H.enc_blocks)
         for res, down_rate in blockstr:
             use_3x3 = res > 2  # Don't use 3x3s for 1x1, 2x2 patches
@@ -177,6 +181,8 @@ class Decoder(HModule):
         resos = set()
         dec_blocks = []
         self.widths = get_width_settings(H.width, H.custom_width_str)
+        H.dec_blocks = "1x1,4m1,4x2,8m4,8x5,16m8,16x10,32m16,32x21"
+
         blocks = parse_layer_string(H.dec_blocks)
         for idx, (res, mixin) in enumerate(blocks):
             dec_blocks.append(DecBlock(H, res, mixin, n_blocks=len(blocks)))

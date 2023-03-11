@@ -91,16 +91,23 @@ HPARAMS_REGISTRY['ffhq1024'] = ffhq1024
 
 
 def parse_args_and_update_hparams(H, parser, s=None):
-    args = parser.parse_args(s)
+    # args = parser.parse_args(s)
+    args, unknown = parser.parse_known_args(s)
+    print('unknown', unknown)
     valid_args = set(args.__dict__.keys())
-    hparam_sets = [x for x in args.hparam_sets.split(',') if x]
-    for hp_set in hparam_sets:
-        hps = HPARAMS_REGISTRY[hp_set]
-        for k in hps:
-            if k not in valid_args:
-                raise ValueError(f"{k} not in default args")
-        parser.set_defaults(**hps)
-    H.update(parser.parse_args(s).__dict__)
+    print('args.hparam_sets', args.hparam_sets)
+    args.hparam_sets = args.hparam_sets or []
+    if args.hparam_sets:
+        hparam_sets = [x for x in args.hparam_sets.split(',') if x]
+        for hp_set in hparam_sets:
+            hps = HPARAMS_REGISTRY[hp_set]
+            for k in hps:
+                if k not in valid_args:
+                    raise ValueError(f"{k} not in default args")
+            parser.set_defaults(**hps)
+    args_, unknown = parser.parse_known_args(s)
+    print('unknown2', unknown)
+    H.update(args_.__dict__)
 
 
 def add_vae_arguments(parser):
@@ -123,8 +130,10 @@ def add_vae_arguments(parser):
     parser.add_argument('--dec_blocks', type=str, default=None)
     parser.add_argument('--zdim', type=int, default=16)
     parser.add_argument('--width', type=int, default=512)
+    parser.add_argument('--image_channels', type=int, default=3)
     parser.add_argument('--custom_width_str', type=str, default='')
     parser.add_argument('--bottleneck_multiple', type=float, default=0.25)
+    
 
     parser.add_argument('--no_bias_above', type=int, default=64)
     parser.add_argument('--scale_encblock', action="store_true")

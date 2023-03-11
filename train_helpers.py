@@ -1,21 +1,21 @@
 import torch
 import numpy as np
-from mpi4py import MPI
+# from mpi4py import MPI
 import socket
 import argparse
 import os
 import json
 import subprocess
 from hps import Hyperparams, parse_args_and_update_hparams, add_vae_arguments
-from utils import (logger,
-                   local_mpi_rank,
-                   mpi_size,
-                   maybe_download,
-                   mpi_rank)
+# from utils import (logger,
+#                    local_mpi_rank,
+#                    mpi_size,
+#                    maybe_download,
+#                    mpi_rank)
 from data import mkdir_p
 from contextlib import contextmanager
 import torch.distributed as dist
-from apex.optimizers import FusedAdam as AdamW
+# from apex.optimizers import FusedAdam as AdamW
 from vae import VAE
 from torch.nn.parallel.distributed import DistributedDataParallel
 
@@ -110,16 +110,16 @@ def set_up_hyperparams(s=None):
     parser = argparse.ArgumentParser()
     parser = add_vae_arguments(parser)
     parse_args_and_update_hparams(H, parser, s=s)
-    setup_mpi(H)
-    setup_save_dirs(H)
-    logprint = logger(H.logdir)
-    for i, k in enumerate(sorted(H)):
-        logprint(type='hparam', key=k, value=H[k])
-    np.random.seed(H.seed)
-    torch.manual_seed(H.seed)
-    torch.cuda.manual_seed(H.seed)
-    logprint('training model', H.desc, 'on', H.dataset)
-    return H, logprint
+    # setup_mpi(H)
+    # setup_save_dirs(H)
+    # logprint = logger(H.logdir)
+    # for i, k in enumerate(sorted(H)):
+    #     logprint(type='hparam', key=k, value=H[k])
+    # np.random.seed(H.seed)
+    # torch.manual_seed(H.seed)
+    # torch.cuda.manual_seed(H.seed)
+    # logprint('training model', H.desc, 'on', H.dataset)
+    return H #, logprint
 
 
 def restore_params(model, path, local_rank, mpi_size, map_ddp=True, map_cpu=False):
@@ -147,7 +147,7 @@ def restore_log(path, local_rank, mpi_size):
     return cur_eval_loss, iterate, starting_epoch
 
 
-def load_vaes(H, logprint):
+def load_vaes(H):#, logprint):
     vae = VAE(H)
     if H.restore_path:
         logprint(f'Restoring vae from {H.restore_path}')
@@ -164,14 +164,14 @@ def load_vaes(H, logprint):
     vae = vae.cuda(H.local_rank)
     ema_vae = ema_vae.cuda(H.local_rank)
 
-    vae = DistributedDataParallel(vae, device_ids=[H.local_rank], output_device=H.local_rank)
+    # vae = DistributedDataParallel(vae, device_ids=[H.local_rank], output_device=H.local_rank)
 
-    if len(list(vae.named_parameters())) != len(list(vae.parameters())):
-        raise ValueError('Some params are not named. Please name all params.')
-    total_params = 0
-    for name, p in vae.named_parameters():
-        total_params += np.prod(p.shape)
-    logprint(total_params=total_params, readable=f'{total_params:,}')
+    # if len(list(vae.named_parameters())) != len(list(vae.parameters())):
+    #     raise ValueError('Some params are not named. Please name all params.')
+    # total_params = 0
+    # for name, p in vae.named_parameters():
+    #     total_params += np.prod(p.shape)
+    # logprint(total_params=total_params, readable=f'{total_params:,}')
     return vae, ema_vae
 
 
